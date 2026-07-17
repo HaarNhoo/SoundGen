@@ -6,9 +6,7 @@ Incrémente la version si ça réussit;
 Version modifiée pour ce projet
 ----------------------------------------------------------------
 Arnaud LAPIOS
-Copyright (c) 2025 DALKIA. Tous droits réservés.
-Ce code source est protégé par les lois sur le copyright.
-Toute reproduction ou utilisation non autorisée est interdite.
+2025
 ----------------------------------------------------------------
 """
 
@@ -22,7 +20,7 @@ NUIKTA_COMMAND = [
     "-m",
     "nuitka",
     "--onefile",
-    
+
     # "--standalone",
     # "--follow-imports",
     "--python-flag=isolated",

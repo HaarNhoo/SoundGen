@@ -16,7 +16,7 @@ Requirements :
     winsdk==1.0.0b10
 
 Arnaud LAPIOS
-(c) 2025
+2025
 """
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -37,9 +37,9 @@ try:
     from winsdk.windows.media.speechsynthesis import SpeechSynthesizer, VoiceInformation
     from winsdk.windows.storage.streams import DataReader, Buffer, InputStreamOptions
     # Garde une référence pour les Enums si nécessaire
-    import winsdk.windows.media.speechsynthesis as wss 
+    import winsdk.windows.media.speechsynthesis as wss
 except ImportError:
-    messagebox.showerror("Erreur d'importation", 
+    messagebox.showerror("Erreur d'importation",
                          "La bibliothèque 'winsdk' est requise.\n"
                          "Veuillez l'installer avec: pip install winsdk")
     sys.exit()
@@ -87,7 +87,7 @@ class AudioGeneratorApp:
         # --- Paramètres audio ---
         self.samplerate = 44100
         self.base_sweep_duration = 10
-        
+
         # --- Variables d'état THREAD-SAFE ---
         # Ces variables sont partagées entre le thread GUI et le thread audio.
         # L'accès doit être protégé par self.lock.
@@ -107,7 +107,7 @@ class AudioGeneratorApp:
         # --- Fin des variables partagées ---
 
         self.stream = None # Le flux audio principal (sounddevice)
-        
+
         # --- Références aux widgets ---
         self.btn_stop = None
         self.btn_speak = None
@@ -340,7 +340,7 @@ class AudioGeneratorApp:
             # "Snap" à la note MIDI la plus proche
             midi_note = self.freq_to_midi_note(freq)
             freq_snapped = self.midi_note_to_freq(midi_note)
-            
+
             self.freq_midi_note_var.set(midi_note)
             self.freq_entry_var.set(f"{freq_snapped:.2f}")
         except ValueError:
@@ -400,7 +400,7 @@ class AudioGeneratorApp:
         max_midi = 135 # 20865 Hz
         ttk.Label(controls_frame, text="Fréquence:").grid(row=2, column=0, sticky="w", padx=5)
         tk.Scale(controls_frame, from_=min_midi, to=max_midi, orient=tk.HORIZONTAL,
-                  variable=self.freq_midi_note_var, command=self.on_freq_slider_change, 
+                  variable=self.freq_midi_note_var, command=self.on_freq_slider_change,
                   length=slider_length, tickinterval=12, resolution=1).grid(row=2, column=1, sticky="we")
 
         # Champ de saisie Fréquence
@@ -410,7 +410,7 @@ class AudioGeneratorApp:
         entry = ttk.Entry(freq_entry_frame, textvariable=self.freq_entry_var, width=10)
         entry.pack(side=tk.LEFT)
         entry.bind("<Return>", self.on_freq_entry_update)
-        entry.bind("<FocusOut>", self.on_freq_entry_update) 
+        entry.bind("<FocusOut>", self.on_freq_entry_update)
         ttk.Label(freq_entry_frame, text="Hz (Appuyez sur Entrée pour 'snapper')").pack(side=tk.LEFT, padx=5)
 
 
@@ -536,8 +536,8 @@ class AudioGeneratorApp:
         with self.lock:
             self.audio_mode = 'stop'
             # Force la fin du buffer TTS, au cas où
-            self.tts_buffer_index = len(self.tts_buffer) 
-        
+            self.tts_buffer_index = len(self.tts_buffer)
+
         # Si on a interrompu le TTS (soit en génération, soit en lecture)
         # on réactive le bouton 'Parler' manuellement via le thread GUI.
         if was_speaking:
@@ -566,7 +566,7 @@ class AudioGeneratorApp:
         self.tts_is_speaking = True
         self.btn_speak.config(state='disabled')
         self.stop_audio() # Arrête tout son en cours
-        
+
         # Soumet la tâche de synthèse au thread asyncio
         self.submit_async_task(self._tts_task_run_async(text, voice_object))
 
@@ -586,7 +586,7 @@ class AudioGeneratorApp:
         try:
             synthesizer = SpeechSynthesizer()
             synthesizer.voice = voice
-            
+
             # 1. Synthétiser vers un flux en mémoire (format WAV par défaut)
             stream = await synthesizer.synthesize_text_to_stream_async(text)
             if not stream or stream.size == 0:
@@ -596,19 +596,19 @@ class AudioGeneratorApp:
             stream_size = int(stream.size) # Convertit uint64 en int
             data_reader = DataReader(stream.get_input_stream_at(0))
             await data_reader.load_async(stream_size)
-            
+
             # Créer un bytearray de la bonne taille
             data_bytes = bytearray(stream_size)
             # Demander au DataReader de remplir ce bytearray (méthode in-place)
             data_reader.read_bytes(data_bytes)
-            
+
             data_reader.close()
-            
+
             # 3. Utiliser 'io' et 'wave' pour lire le format des données WAV en mémoire
             pcm_data = np.array([], dtype=np.int16)
             source_rate = self.samplerate
             source_channels = 1
-            
+
             try:
                 with io.BytesIO(data_bytes) as in_memory_wav:
                     with wave.open(in_memory_wav, 'rb') as wav_file:
@@ -617,7 +617,7 @@ class AudioGeneratorApp:
                         source_bits = wav_file.getsampwidth() * 8
                         source_rate = wav_file.getframerate()
                         n_frames = wav_file.getnframes()
-                        
+
                         print(f"Format audio WAV (lu): {source_rate} Hz, {source_channels} canaux, {source_bits} bits")
 
                         if source_bits != 16:
@@ -634,7 +634,7 @@ class AudioGeneratorApp:
                 pcm_data = np.frombuffer(data_bytes, dtype=np.int16)
                 source_rate = 22050 # Fréquence de fallback commune pour le TTS
                 source_channels = 1
-            
+
             # Si la source est stéréo, on la moyenne en mono
             if source_channels > 1:
                 pcm_data_stereo = pcm_data.reshape(-1, source_channels)
@@ -647,7 +647,7 @@ class AudioGeneratorApp:
             if source_rate != self.samplerate:
                 num_source_samples = len(float_data)
                 num_target_samples = int(num_source_samples * self.samplerate / source_rate)
-                
+
                 # Interpolation linéaire simple (efficace)
                 source_time = np.linspace(0, 1, num_source_samples)
                 target_time = np.linspace(0, 1, num_target_samples)
@@ -655,7 +655,7 @@ class AudioGeneratorApp:
                 resampled_data = np.interp(target_time, source_time, float_data)
             else:
                 resampled_data = float_data # Pas besoin de rééchantillonner
-            
+
             # 6. Publier le buffer pour le callback audio (thread-safe)
             with self.lock:
                 self.tts_buffer = resampled_data
@@ -665,7 +665,7 @@ class AudioGeneratorApp:
         except Exception as e:
             print(f"Erreur (async) lors de la synthèse TTS: {e}")
             # Réactive le bouton même en cas d'erreur
-            self.root.after(0, self.on_tts_finished) 
+            self.root.after(0, self.on_tts_finished)
 
     def on_tts_finished(self):
         """
@@ -677,34 +677,34 @@ class AudioGeneratorApp:
         if threading.current_thread() != threading.main_thread():
             self.root.after(0, self.on_tts_finished)
             return
-            
+
         if self.tts_is_speaking: # Évite les appels multiples
             print("Lecture TTS terminée, réactivation du bouton.")
             self.tts_is_speaking = False
             if self.btn_speak: # S'assure que le bouton existe
                 self.btn_speak.config(state='normal')
-        
+
     # --- Boucle de mise à jour et Callback Audio ---
 
     def update_button_states(self):
         """
         [Thread GUI] Boucle périodique pour mettre à jour l'état du bouton "Stop".
         """
-        
+
         with self.lock:
             # Le son est considéré comme "joué" si :
             # 1. Le mode n'est pas 'stop'
             # 2. OU le TTS est en cours de *génération* (avant que l'audio_callback ne démarre)
             is_playing = (self.audio_mode != 'stop') or self.tts_is_speaking
-        
+
         if self.btn_stop: # S'assure que le bouton existe
             current_state = str(self.btn_stop.cget('state'))
-            
+
             if is_playing and current_state == 'disabled':
                 self.btn_stop.config(state='normal')
             elif not is_playing and current_state == 'normal':
                 self.btn_stop.config(state='disabled')
-            
+
         # Continue la boucle
         self.root.after(100, self.update_button_states)
 
@@ -722,7 +722,7 @@ class AudioGeneratorApp:
         """
         if status:
             print(status, flush=True)
-        
+
         # 1. Copie thread-safe des paramètres (rapide)
         with self.lock:
             mode = self.audio_mode
@@ -733,18 +733,18 @@ class AudioGeneratorApp:
             beta = self.audio_beta
             phase = self.phase
             index = self.current_sample_index
-            
+
             # Spécifique au TTS
             tts_data = self.tts_buffer
             tts_index = self.tts_buffer_index
-        
+
         # 2. Génération du signal (mono)
         try:
             if mode == 'noise':
                 # Génère un bruit coloré basé sur l'exposant beta
                 data = colorednoise.powerlaw_psd_gaussian(beta, frames).astype(np.float32)
                 data *= 0.2 # Normalisation du volume
-            
+
             elif mode == 'fixed':
                 # Fréquence fixe (sinus)
                 phase_increment = (2 * np.pi * freq) / self.samplerate
@@ -756,7 +756,7 @@ class AudioGeneratorApp:
                 # Balayage (Sweep) logarithmique
                 duration_sec = self.base_sweep_duration / speed
                 total_samples = int(duration_sec * self.samplerate)
-                
+
                 if index >= total_samples:
                     # Le sweep est terminé
                     data = np.zeros(frames, dtype=np.float32)
@@ -764,11 +764,11 @@ class AudioGeneratorApp:
                 else:
                     # Calcule le temps normalisé pour ce bloc
                     t_norm = (index + np.arange(frames)) / total_samples
-                    
+
                     # Gère la fin du sweep au milieu d'un bloc
                     if t_norm.max() >= 1.0:
                         end_point = np.argmax(t_norm >= 1.0)
-                        t_norm[end_point:] = 0.0 
+                        t_norm[end_point:] = 0.0
                         data = np.zeros(frames, dtype=np.float32)
                     else:
                         data = np.empty(frames, dtype=np.float32)
@@ -780,7 +780,7 @@ class AudioGeneratorApp:
                     # Intègre la phase (cumsum)
                     t = phase + np.cumsum(phase_increment)
                     data = 0.5 * np.sin(t).astype(np.float32)
-                    
+
                     if 'end_point' in locals():
                         data[end_point:] = 0.0 # Met le reste du buffer à zéro
                     phase = t[-1] % (2 * np.pi) # Garde la phase
@@ -790,7 +790,7 @@ class AudioGeneratorApp:
                 # Lit depuis le buffer TTS
                 samples_needed = frames
                 samples_available = len(tts_data) - tts_index
-                
+
                 if samples_available >= samples_needed:
                     # Assez de données dans le buffer
                     data = tts_data[tts_index : tts_index + samples_needed]
@@ -814,10 +814,10 @@ class AudioGeneratorApp:
             pan_rad = (pan + 1.0) * 0.5 * (np.pi / 2.0)
             gain_left = np.cos(pan_rad)
             gain_right = np.sin(pan_rad)
-            
+
             left_channel = data * volume * gain_left
             right_channel = data * volume * gain_right
-            
+
             # Remplit le buffer de sortie
             outdata[:, 0] = left_channel
             outdata[:, 1] = right_channel
@@ -827,7 +827,7 @@ class AudioGeneratorApp:
                 self.phase = phase
                 self.current_sample_index = index
                 self.tts_buffer_index = tts_index
-                if mode == 'stop': 
+                if mode == 'stop':
                     self.audio_mode = 'stop'
 
         except Exception as e:
@@ -853,7 +853,7 @@ class AudioGeneratorApp:
 
         except Exception as e:
             print(f"Erreur critique au démarrage du flux audio: {e}", flush=True)
-            messagebox.showerror("Erreur Audio", 
+            messagebox.showerror("Erreur Audio",
                                  f"Impossible de démarrer le flux audio.\nErreur: {e}\n\n"
                                  "Vérifiez vos périphériques de sortie audio."
                                  )
@@ -881,12 +881,12 @@ class AudioGeneratorApp:
         if self.stream:
             self.stream.stop()
             self.stream.close()
-        
+
         # Arrête la boucle asyncio proprement
         if self.asyncio_loop:
             self.asyncio_loop.call_soon_threadsafe(self.asyncio_loop.stop)
             self.async_thread.join(timeout=1.0) # Attend que le thread se termine
-            
+
         self.root.destroy()
         sys.exit()
 
