@@ -1,0 +1,5 @@
+colorednoise==2.2.0
+numpy==2.3.4
+pyttsx3==2.99
+sounddevice==0.5.3
+winsdk==1.0.0b10
